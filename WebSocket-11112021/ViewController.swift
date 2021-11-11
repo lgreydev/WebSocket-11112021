@@ -33,20 +33,52 @@ class ViewController: UIViewController, URLSessionWebSocketDelegate {
         }
     }
                         
-                            
     func close() {
         webSocket?.cancel(with: .goingAway, reason: "Demo ended".data(using: .utf8))
     }
     
-    func send() {}
-    func receive() {}
+    func send() {
+        webSocket?.send(.string("Send new message \(Int.random(in: 0...100))"), completionHandler: { error in
+            if let error = error {
+                print("Send error \(error)")
+            }
+        })
+    }
+    
+    func receive() {
+        webSocket?.receive(completionHandler: { [weak self] result in
+            switch result {
+            case .success(let message):
+                switch message {
+                case .data(let data):
+                    print("Data: \(data)")
+                case .string(let message):
+                    print("Got string: \(message)")
+                default:
+                    break
+                }
+            case .failure(let error):
+                print("Receive error \(error)")
+                
+            }
+            
+            self?.receive()
+        })
+    }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         print("Did connect to socket")
+        
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         print("Did close connection with reason")
+    }
+    
+    @IBAction func sendButton(_ sender: UIButton) {
+        ping()
+        send()
+        receive()
     }
 }
 
